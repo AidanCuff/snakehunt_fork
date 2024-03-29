@@ -231,6 +231,37 @@ class Pellet():
     def setDetPos(self,xpos,ypos):
         self.position = [xpos,ypos]
 
+#pellet object control
+class Obstacle():
+    def __init__(self, world):
+        self.world = world
+        self.position = self.setPos()
+        self.eaten = False
+        self.color = (50, 50, 255)
+        self.width = CELL
+        self.height = CELL
+        #self.image =
+
+    def setPos(self):
+        xpos = self.world.get_width()/4 + randint(1, COLS-1)*CELL
+        ypos = self.world.get_height()/4 + randint(1,ROWS-1)*CELL
+        return (xpos, ypos)
+
+    def getPos(self):
+        return self.position[0], self.position[1]
+
+    def render(self, surface):
+        xpos, ypos = self.getPos()
+        #pygame.draw.rect(surface, self.color, (self.position[0], self.position[1], self.width - 2, self.width - 2))
+        pygame.draw.rect(surface, self.color, (xpos, ypos, self.height-2, self.width-2))
+
+    def destroy(self):
+        self.position = self.setPos()
+
+    # set a pellet's position to a value passed in
+    def setDetPos(self,xpos,ypos):
+        self.position = [xpos,ypos]
+
 class Camera():
     def __init__(self, player, dimensions):
         self.target = player

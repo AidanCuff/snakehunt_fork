@@ -66,10 +66,11 @@ class GameData():
         The sound file to play during this frame
     """
 
-    def __init__(self, snake, snakes, pellets, leaderboard, sound=None):
+    def __init__(self, snake, snakes, pellets, obstacles, leaderboard, sound=None):
         """Initialize game data."""
         self.snake = snake
         self.snakes = snakes
         self.pellets = pellets
+        self.obstacles = obstacles
         self.leaderboard = leaderboard
         self.sound = sound

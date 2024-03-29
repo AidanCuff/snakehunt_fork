@@ -381,6 +381,7 @@ class Game():
         snake = game_data.snake
         snakes = game_data.snakes
         pellets = game_data.pellets
+        obstacles = game_data.obstacles
 
         self.window.fill((0, 0, 0))
         my_head = snake[0]
@@ -391,7 +392,10 @@ class Game():
 
         for pellet in pellets:
             pygame.draw.rect(self.window, pellet.color, make_rect(head_rect, my_head.position, pellet.position, pellet.width))
-            
+
+        for obstacle in obstacles:
+            pygame.draw.rect(self.window, obstacle.color, make_rect(head_rect, my_head.position, obstacle.position, obstacle.width))
+
         for this_snake in snakes:
             for body_part in this_snake:
                 rect = make_rect(head_rect, my_head.position, body_part.position, body_part.width)

@@ -629,6 +629,220 @@ class RandomPellets():
         """
         self.pellets = self.pellets + pellets
 
+#######################################################################################
+class Obstacle():
+    """
+    A class representing a consumable food object.
+
+    Attributes
+    ----------
+    position (tuple[int, int]):
+        Position of the pellet
+
+    color (tuple[int, int, int]):
+        Color of the pellet
+
+    val (int):
+        Number of body parts that a snake gets by consuming this pellet
+
+    is_remains (Boolean):
+        Whether this pellet is the remains of a dead snake
+
+    width (int):
+        Width of pellet
+
+    height (int):
+        Height of pellet
+
+    Methods
+    -------
+    setRandomPos()
+    getPos()
+    setPos()
+    """
+    def __init__(self, color_val, is_remains=False):
+        """Create pellet object."""
+        self.position = self.setRandomPos()
+        self.color = color_val[0]
+        self.val = color_val[1]
+        self.is_remains = is_remains    # Is this pellet part of the remains of a dead snake?
+        self.width = CELL
+        self.height = CELL
+
+    def setRandomPos(self):
+        """
+        Give the pellet a random position.
+
+        Return
+        ------
+        A tuple [int, int] representing the random position
+        """
+        xpos = randint(1, COLS-1)*CELL
+        ypos = randint(1,ROWS-1)*CELL
+        return (xpos, ypos)
+
+    def getPos(self):
+        """
+        Get the pellet's position.
+
+        Return
+        ------
+        A tuple [int, int] current position
+        """
+        return self.position[0], self.position[1]
+
+    def setPos(self,xpos,ypos):
+        """
+        Set the pellet's position.
+
+        Parameters
+        ----------
+        xpos (int):
+            x position
+
+        ypos (int):
+            y position
+
+        Return
+        ------
+        None
+        """
+        self.position = [xpos,ypos]
+
+class RandomObstacles():
+    """
+    A class that creates multiple pellets at random non-overlapping positions.
+
+    This class maintains the pellets by restoring them at new positions when consumed.
+
+    IMPORTANT NOTE
+    For a 32 bit system, the maximum array size in python is 536,870,912
+    elements. Since this implementation is dependent on the board and cell size,
+    this will not work for anything larger than a 23170 by 23170 size board/cell
+    ratio for 32 bit systems.
+
+    Attributes
+    ----------
+    numPellets (int):
+        Number of pellets to generate
+
+    availablePositions (list):
+        List of available positions
+
+    pellets (list):
+        List of pellets
+
+    Methods
+    -------
+    setColor()
+    genPellets()
+    setPositions()
+    getPositions()
+    resetPellet(pel)
+    addPellets(pellets)
+    """
+
+    val_1 = ((136,136,136), 1)
+    val_2 = ((150,150,255), 2)
+    val_3 = ((255,150,150), 3)
+
+    def __init__(self, numObstacles):
+        """Create RandomPellets object."""
+        self.numObstacles = numObstacles
+        self.availablePositions = self.setPositions()
+        self.obstacles = self.genObstacles()
+
+    def setColor(self):
+        """
+        Give the pellet a random color and value.
+
+        Return
+        ------
+        A tuple containing the color and the value
+        """
+        return self.val_1
+
+    def genObstacles(self):
+        """
+        Generate pellets at random positions.
+
+        Return
+        ------
+        List of pellets generated
+        """
+        obstacles = []
+        for i in range(self.numObstacles):
+            obs = Obstacle(self.setColor())
+            pos = self.availablePositions.pop(randint(0,len(self.availablePositions)-1))
+            obs.setPos(pos[0],pos[1])
+            obstacles.append(obs)
+        return(obstacles)
+
+    def setPositions(self):
+        """
+        Initialize all possible pellet positions
+
+        Return
+        ------
+        List of all possible positions
+        """
+        positions = []
+        for i in range(flr(ROWS)):
+            for j in range(flr(COLS)):
+                positions.append([i*CELL, j*CELL])
+        return(positions)
+
+    def getPositions(self):
+        """
+        Get a list of the positions of all pellets.
+
+        Return
+        ------
+        List
+        """
+        positions = []
+        for obstacle in self.obstacles:
+            positions.append(obstacle.position)
+        return(positions)
+
+    def resetObstacle(self,obs):
+        """
+        Remove a pellet then generate a new one at a random position.
+
+        Parameters
+        ----------
+        pel (Pellet):
+            The pellet to remove
+
+        Return
+        ------
+        None
+        """
+
+        self.obstacles.remove(obs)
+        pos = self.availablePositions.pop(randint(1,len(self.availablePositions)-1))
+        color_val = self.setColor()
+        obs2 = Obstacle(color_val)
+        obs2.setPos(pos[0], pos[1])
+        self.availablePositions.append(obs.position)
+        self.obstacles.append(obs2)
+
+    def addObstacles(self, obstacles):
+        """
+        Join the list of pellets with another list of pellets.
+
+        Parameters
+        ----------
+        pellets (list):
+            List of pellets to join
+
+        Return
+        ------
+        None
+        """
+        self.obstacles = self.obstacles + obstacles
+
+######################################################################################################
 class Camera():
     """
     A class representing a camera.
@@ -721,6 +935,7 @@ class Game():
         self.players = []
         self.camera = Camera(500, 500)
         self.random_pellets = RandomPellets(25)
+        self.random_obstacles = RandomObstacles(25)
         self.running = True
         self.bounds = {
             'left': 0,
@@ -824,6 +1039,33 @@ class Game():
                 )
             )
         return pellets
+
+    ##############################################################
+    def get_visible_obstacles(self, camera_target):
+        """
+        Get the pellets that are visible in camera.
+
+        Parameters
+        ----------
+        camera_target (tuple[int, int]):
+            Position of the camera's target, basis for what is and isn't visible
+
+        Return
+        ------
+        List of pellets
+        """
+        obstacles = []
+        for obstacle in self.random_obstacles.obstacles:
+            if not self.camera.within_bounds(obstacle.position, camera_target):
+                continue
+            obstacles.append(
+                CellData(
+                    obstacle.position,
+                    obstacle.color,
+                    obstacle.width
+                )
+            )
+        return obstacles
     
     def get_random_position(self):
         """
@@ -865,6 +1107,7 @@ class Game():
 
             for player in self.players:
                 pos = self.random_pellets.getPositions()
+                obs = self.random_obstacles.getPositions()
                 others = snakes[:]
                 snake = player.snake
                 others.remove(snake)
@@ -877,6 +1120,9 @@ class Game():
                     else:
                         self.random_pellets.resetPellet(pellet)
                     snake.grow(pellet.val, pellet.color)
+                if [snake.head.position[0], snake.head.position[1]] in obs:
+                    sound = comm.Message.PELLET_EATEN
+                    dead_snakes.append(snake)
                 if snake.collides_self():
                     sound = comm.Message.SELF_COLLISION
                     dead_snakes.append(snake)
@@ -896,8 +1142,9 @@ class Game():
                 snake = player.snake.get_visible_bodyparts(self.camera, camera_target)
                 other_snakes = self.get_visible_snakes(player, camera_target)
                 pellets = self.get_visible_pellets(camera_target)
+                obstacles = self.get_visible_obstacles(camera_target)
 
-                game_data = GameData(snake, other_snakes, pellets, leaderboard, sound)
+                game_data = GameData(snake, other_snakes, pellets,obstacles, leaderboard, sound)
                 game_data_serialized = pickle.dumps(game_data)
                 try:
                     self.server.send_game_data(player, game_data_serialized)
